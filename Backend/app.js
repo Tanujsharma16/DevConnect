@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const requestRoutes = require("./routes/requestRoutes");
 const fileUpload = require("express-fileupload");
 const cookieParser = require("cookie-parser");
 const authRoutes = require("./routes/authRoutes");
@@ -19,7 +20,7 @@ app.use(
 
 // Routes
 app.use("/api/auth", authRoutes);
-
+app.use("/api/request", requestRoutes);
 // Test Route
 app.get("/", (req, res) => {
     res.send("🚀 DevConnect Backend is Running");
