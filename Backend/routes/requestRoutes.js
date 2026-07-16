@@ -10,6 +10,7 @@ const {
     rejectConnectionRequest,
     getPendingRequests,
     getMyConnections,
+    getFeed,
 } = require("../controllers/requestController");
 router.post(
     "/send/:userId",
@@ -35,5 +36,10 @@ router.get(
     "/connections",
     authMiddleware,
     getMyConnections
+);
+router.get(
+    "/feed",
+    authMiddleware,
+    getFeed
 );
 module.exports = router;

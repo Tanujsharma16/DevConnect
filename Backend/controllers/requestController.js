@@ -197,9 +197,6 @@ const getFeed = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
 
-        // Step 1
-        // Get all requests where current user is sender or receiver
-
         const requests = await ConnectionRequest.find({
             $or: [
                 { sender: userId },
@@ -207,7 +204,29 @@ const getFeed = async (req, res) => {
             ],
         });
 
-        // Remaining logic next step...
+        const hideUsers = new Set();
+
+        hideUsers.add(userId.toString());
+
+        requests.forEach((request) => {
+            hideUsers.add(request.sender.toString());
+            hideUsers.add(request.receiver.toString());
+        });
+
+        const users = await User.find({
+            _id: {
+                $nin: [...hideUsers],
+            },
+        })
+            .select("-password")
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        res.status(200).json({
+            success: true,
+            count: users.length,
+            users,
+        });
 
     } catch (error) {
         res.status(500).json({
@@ -222,4 +241,5 @@ module.exports = {
     rejectConnectionRequest,
     getPendingRequests,
     getMyConnections,
+    getFeed,
 };

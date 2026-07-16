@@ -30,6 +30,16 @@ const userSchema = new mongoose.Schema({
     type: Number,
     min: 18,
     max: 100
+
+},
+githubUsername: {
+    type: String,
+    default: "",
+},
+
+githubData: {
+    type: Object,
+    default: {},
 },
 
 gender: {
