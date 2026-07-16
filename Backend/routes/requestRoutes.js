@@ -6,12 +6,34 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 const {
     sendConnectionRequest,
+    acceptConnectionRequest,
+    rejectConnectionRequest,
+    getPendingRequests,
+    getMyConnections,
 } = require("../controllers/requestController");
-
 router.post(
     "/send/:userId",
     authMiddleware,
     sendConnectionRequest
 );
-
+router.post(
+    "/accept/:requestId",
+    authMiddleware,
+    acceptConnectionRequest
+);
+router.post(
+    "/reject/:requestId",
+    authMiddleware,
+    rejectConnectionRequest
+);
+router.get(
+    "/pending",
+    authMiddleware,
+    getPendingRequests
+);
+router.get(
+    "/connections",
+    authMiddleware,
+    getMyConnections
+);
 module.exports = router;
