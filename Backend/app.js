@@ -7,7 +7,7 @@ const fileUpload = require("express-fileupload");
 const cookieParser = require("cookie-parser");
 const authRoutes = require("./routes/authRoutes");
 const app = express();
-
+const developerRoutes = require("./routes/developerRoutes");
 // Middlewares
 app.use(cors());
 app.use(express.json());
@@ -20,6 +20,7 @@ app.use(
         tempFileDir: "/tmp/",
     })
 );
+app.use("/api/developers", developerRoutes);
 
 // Routes
 app.use("/api/auth", authRoutes);
