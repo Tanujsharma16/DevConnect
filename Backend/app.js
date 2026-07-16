@@ -8,6 +8,9 @@ const cookieParser = require("cookie-parser");
 const authRoutes = require("./routes/authRoutes");
 const app = express();
 const developerRoutes = require("./routes/developerRoutes");
+const blogRoutes = require("./routes/blogRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const followRoutes = require("./routes/followRoutes");
 // Middlewares
 app.use(cors());
 app.use(express.json());
@@ -20,8 +23,10 @@ app.use(
         tempFileDir: "/tmp/",
     })
 );
+app.use("/api/users", followRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/developers", developerRoutes);
-
+app.use("/api/blogs", blogRoutes);
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/request", requestRoutes);
