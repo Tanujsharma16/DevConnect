@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import DeveloperProfile from "./pages/Developers/DeveloperProfile";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 
@@ -34,6 +34,11 @@ function App() {
           <Route path="/projects" element={<Projects />} />
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/developers" element={<Developers />} />
+          <Route
+    path="/developers/:id"
+    element={<DeveloperProfile />}
+  />
+
         </Route>
 
       </Routes>

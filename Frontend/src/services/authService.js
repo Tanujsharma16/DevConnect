@@ -12,3 +12,15 @@ export const updateProfile = (data) => api.put("/auth/profile", data);
 
 export const changePassword = (data) =>
   api.put("/auth/change-password", data);
+
+export const uploadProfilePhoto = (file) => {
+    const formData = new FormData();
+
+    formData.append("photo", file);
+
+    return api.post("/auth/upload-photo", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+};

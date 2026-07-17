@@ -1,4 +1,4 @@
-const { registerUser,loginUser,getProfile,logoutUser ,updateProfile,changePassword} = require("../controllers/authController");
+const { registerUser,loginUser,getProfile,logoutUser ,updateProfile,changePassword,uploadProfilePhoto} = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 const express = require("express");
@@ -10,9 +10,9 @@ router.get("/profile", authMiddleware, getProfile);
 router.put("/profile", authMiddleware, updateProfile);
 router.put("/change-password", authMiddleware, changePassword);
 router.post("/logout", logoutUser);
-// router.post(
-//     "/upload-photo",
-//     authMiddleware,
-//     uploadProfilePhoto
-// );
+router.post(
+    "/upload-photo",
+    authMiddleware,
+    uploadProfilePhoto
+);
 module.exports = router;

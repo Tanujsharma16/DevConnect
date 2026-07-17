@@ -24,3 +24,5 @@ export const updateProject = (id, data) => {
 export const deleteProject = (id) => {
     return api.delete(`/projects/${id}`);
 };
+export const getProjectsByUser = (userId) =>
+    api.get(`/projects/user/${userId}`);

@@ -47,7 +47,31 @@ const getDevelopers = async (req, res) => {
         });
     }
 };
+const getDeveloperById = async (req, res) => {
+    try {
+        const developer = await User.findById(req.params.id)
+            .select("-password");
 
+        if (!developer) {
+            return res.status(404).json({
+                success: false,
+                message: "Developer not found",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            developer,
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
 module.exports = {
     getDevelopers,
+    getDeveloperById,
 };

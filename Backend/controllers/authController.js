@@ -1,7 +1,9 @@
+const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
-
+const cloudinary = require("../config/cloudinary");
+const fs = require("fs");
 // ================= REGISTER =================
 const registerUser = async (req, res) => {
     try {
@@ -123,7 +125,18 @@ const getProfile = async (req, res) => {
 // ================= UPDATE PROFILE =================
 const updateProfile = async (req, res) => {
     try {
-        const { firstName, lastName, about, skills } = req.body;
+        const {
+            firstName,
+            lastName,
+            age,
+            gender,
+            about,
+            skills,
+            githubUsername,
+            linkedin,
+            portfolio,
+            photoUrl,
+        } = req.body;
 
         const user = await User.findById(req.userId);
 
@@ -134,10 +147,51 @@ const updateProfile = async (req, res) => {
             });
         }
 
-        if (firstName) user.firstName = firstName;
-        if (lastName) user.lastName = lastName;
-        if (about) user.about = about;
-        if (skills) user.skills = skills;
+        if (firstName !== undefined) user.firstName = firstName;
+        if (lastName !== undefined) user.lastName = lastName;
+        if (age !== undefined) user.age = age;
+        if (gender !== undefined) user.gender = gender;
+        if (about !== undefined) user.about = about;
+        if (skills !== undefined) user.skills = skills;
+        if (linkedin !== undefined) user.linkedin = linkedin;
+        if (portfolio !== undefined) user.portfolio = portfolio;
+
+        // ---------- GitHub Integration ----------
+        if (githubUsername !== undefined) {
+            user.githubUsername = githubUsername;
+
+            try {
+                const { data } = await axios.get(
+                    `https://api.github.com/users/${githubUsername}`
+                );
+
+                user.githubData = {
+                    name: data.name,
+                    bio: data.bio,
+                    avatarUrl: data.avatar_url,
+                    profileUrl: data.html_url,
+                    followers: data.followers,
+                    following: data.following,
+                    publicRepos: data.public_repos,
+                };
+
+                // Auto update profile photo
+                if (
+    photoUrl !== undefined &&
+    photoUrl !== null &&
+    photoUrl.trim() !== ""
+) {
+    user.photoUrl = photoUrl;
+}
+
+            } catch (err) {
+                console.log("GitHub user not found");
+            }
+        }
+
+        if (photoUrl !== undefined) {
+            user.photoUrl = photoUrl;
+        }
 
         await user.save();
 
@@ -157,7 +211,6 @@ const updateProfile = async (req, res) => {
         });
     }
 };
-
 // ================= CHANGE PASSWORD =================
 const changePassword = async (req, res) => {
     try {
@@ -205,6 +258,44 @@ const changePassword = async (req, res) => {
     }
 };
 
+const uploadProfilePhoto = async (req, res) => {
+    try {
+        if (!req.files || !req.files.photo) {
+            return res.status(400).json({
+                success: false,
+                message: "Please upload an image",
+            });
+        }
+
+        const file = req.files.photo;
+
+        const result = await cloudinary.uploader.upload(
+            file.tempFilePath,
+            {
+                folder: "DevConnect/ProfilePhotos",
+            }
+        );
+
+        fs.unlinkSync(file.tempFilePath);
+
+        const user = await User.findById(req.userId);
+
+        user.photoUrl = result.secure_url;
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            photoUrl: result.secure_url,
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
 // ================= LOGOUT =================
 const logoutUser = (req, res) => {
     res.clearCookie("token", {
@@ -226,4 +317,5 @@ module.exports = {
     updateProfile,
     changePassword,
     logoutUser,
+    uploadProfilePhoto,
 };

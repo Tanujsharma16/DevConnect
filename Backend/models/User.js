@@ -36,7 +36,15 @@ githubUsername: {
     type: String,
     default: "",
 },
+linkedin: {
+    type: String,
+    default: "",
+},
 
+portfolio: {
+    type: String,
+    default: "",
+},
 githubData: {
     type: Object,
     default: {},

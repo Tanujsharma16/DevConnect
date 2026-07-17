@@ -42,7 +42,26 @@ const getMyProjects = async (req, res) => {
         });
     }
 };
+ // Get Projects By User ID
+const getProjectsByUser = async (req, res) => {
+    try {
+        const projects = await Project.find({
+            user: req.params.userId,
+        });
 
+        res.status(200).json({
+            success: true,
+            count: projects.length,
+            projects,
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
 // Update Project
 const updateProject = async (req, res) => {
     try {
@@ -109,6 +128,7 @@ const deleteProject = async (req, res) => {
 module.exports = {
     createProject,
     getMyProjects,
+    getProjectsByUser,
     updateProject,
     deleteProject,
 };
