@@ -10,9 +10,9 @@ router.get("/profile", authMiddleware, getProfile);
 router.put("/profile", authMiddleware, updateProfile);
 router.put("/change-password", authMiddleware, changePassword);
 router.post("/logout", logoutUser);
-router.post(
-    "/upload-photo",
-    authMiddleware,
-    uploadProfilePhoto
-);
+// router.post(
+//     "/upload-photo",
+//     authMiddleware,
+//     uploadProfilePhoto
+// );
 module.exports = router;

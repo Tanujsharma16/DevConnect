@@ -1,14 +1,13 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const User = require("../models/User");
 
-// ================= REGISTER USER =================
+// ================= REGISTER =================
 const registerUser = async (req, res) => {
     try {
-        // Check if user already exists
-        const existingUser = await User.findOne({
-            email: req.body.email,
-        });
+        const { email, password } = req.body;
+
+        const existingUser = await User.findOne({ email });
 
         if (existingUser) {
             return res.status(400).json({
@@ -17,19 +16,20 @@ const registerUser = async (req, res) => {
             });
         }
 
-        // Hash Password
-        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Replace plain password with hashed password
-        req.body.password = hashedPassword;
+        const user = await User.create({
+            ...req.body,
+            password: hashedPassword,
+        });
 
-        // Create User
-        const user = await User.create(req.body);
+        const userResponse = user.toObject();
+        delete userResponse.password;
 
         res.status(201).json({
             success: true,
             message: "User Registered Successfully",
-            user,
+            user: userResponse,
         });
 
     } catch (error) {
@@ -40,22 +40,20 @@ const registerUser = async (req, res) => {
     }
 };
 
-// ================= LOGIN USER =================
+// ================= LOGIN =================
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Find User
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.status(404).json({
+            return res.status(401).json({
                 success: false,
                 message: "Invalid Email or Password",
             });
         }
 
-        // Compare Password
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
@@ -65,7 +63,6 @@ const loginUser = async (req, res) => {
             });
         }
 
-        // Generate JWT Token
         const token = jwt.sign(
             { id: user._id },
             process.env.JWT_SECRET,
@@ -74,20 +71,21 @@ const loginUser = async (req, res) => {
             }
         );
 
-        // Login Success
         const userResponse = user.toObject();
-delete userResponse.password;
-        res
-    .status(200)
-    .cookie("token", token, {
-        httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
-    .json({
-        success: true,
-        message: "Login Successful",
-        user:userResponse,
-    });
+        delete userResponse.password;
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Login Successful",
+            user: userResponse,
+        });
 
     } catch (error) {
         res.status(500).json({
@@ -97,6 +95,7 @@ delete userResponse.password;
     }
 };
 
+// ================= GET PROFILE =================
 const getProfile = async (req, res) => {
     try {
         const user = await User.findById(req.userId).select("-password");
@@ -120,18 +119,8 @@ const getProfile = async (req, res) => {
         });
     }
 };
-const logoutUser = (req, res) => {
-    res
-        .status(200)
-        .clearCookie("token", {
-            httpOnly: true,
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        })
-        .json({
-            success: true,
-            message: "Logged Out Successfully",
-        });
-};
+
+// ================= UPDATE PROFILE =================
 const updateProfile = async (req, res) => {
     try {
         const { firstName, lastName, about, skills } = req.body;
@@ -152,10 +141,13 @@ const updateProfile = async (req, res) => {
 
         await user.save();
 
+        const updatedUser = user.toObject();
+        delete updatedUser.password;
+
         res.status(200).json({
             success: true,
             message: "Profile Updated Successfully",
-            user,
+            user: updatedUser,
         });
 
     } catch (error) {
@@ -165,6 +157,8 @@ const updateProfile = async (req, res) => {
         });
     }
 };
+
+// ================= CHANGE PASSWORD =================
 const changePassword = async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
@@ -178,6 +172,13 @@ const changePassword = async (req, res) => {
             });
         }
 
+        if (oldPassword === newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "New password cannot be same as old password",
+            });
+        }
+
         const isMatch = await bcrypt.compare(oldPassword, user.password);
 
         if (!isMatch) {
@@ -187,9 +188,7 @@ const changePassword = async (req, res) => {
             });
         }
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-        user.password = hashedPassword;
+        user.password = await bcrypt.hash(newPassword, 10);
 
         await user.save();
 
@@ -206,11 +205,25 @@ const changePassword = async (req, res) => {
     }
 };
 
+// ================= LOGOUT =================
+const logoutUser = (req, res) => {
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+    });
+
+    res.status(200).json({
+        success: true,
+        message: "Logged Out Successfully",
+    });
+};
+
 module.exports = {
     registerUser,
     loginUser,
     getProfile,
-    logoutUser,
     updateProfile,
     changePassword,
+    logoutUser,
 };
