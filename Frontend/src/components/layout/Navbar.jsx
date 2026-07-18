@@ -44,6 +44,9 @@ function Navbar() {
                     <NavLink to="/developers" className={linkClass}>
                         Developers
                     </NavLink>
+                   <NavLink to="/collaboration" className={linkClass}>
+    Collaborate
+</NavLink>
                 </div>
 
                 <div className="flex items-center gap-5">

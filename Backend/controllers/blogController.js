@@ -1,6 +1,8 @@
 const Blog = require("../models/Blog");
 
-// Create Blog
+
+// ================= CREATE BLOG =================
+
 const createBlog = async (req, res) => {
     try {
         const blog = await Blog.create({
@@ -22,26 +24,45 @@ const createBlog = async (req, res) => {
     }
 };
 
-// Get All Blogs
+
+// ================= GET ALL BLOGS =================
+
 const getBlogs = async (req, res) => {
     try {
+        const page =
+            parseInt(req.query.page) || 1;
 
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        const limit =
+            parseInt(req.query.limit) || 10;
 
         const blogs = await Blog.find()
-            .populate("author", "firstName lastName photoUrl")
-            .sort({ createdAt: -1 })
-            .skip((page - 1) * limit)
+            .populate(
+                "author",
+                "firstName lastName photoUrl"
+            )
+            .populate(
+                "comments.user",
+                "firstName lastName photoUrl"
+            )
+            .sort({
+                createdAt: -1,
+            })
+            .skip(
+                (page - 1) * limit
+            )
             .limit(limit);
 
-        const total = await Blog.countDocuments();
+        const total =
+            await Blog.countDocuments();
 
         res.status(200).json({
             success: true,
             total,
             page,
-            totalPages: Math.ceil(total / limit),
+            totalPages:
+                Math.ceil(
+                    total / limit
+                ),
             blogs,
         });
 
@@ -53,17 +74,29 @@ const getBlogs = async (req, res) => {
     }
 };
 
-// Get Single Blog
+
+// ================= GET SINGLE BLOG =================
+
 const getBlog = async (req, res) => {
     try {
-
-        const blog = await Blog.findById(req.params.id)
-            .populate("author", "firstName lastName photoUrl");
+        const blog =
+            await Blog.findById(
+                req.params.id
+            )
+                .populate(
+                    "author",
+                    "firstName lastName photoUrl"
+                )
+                .populate(
+                    "comments.user",
+                    "firstName lastName photoUrl"
+                );
 
         if (!blog) {
             return res.status(404).json({
                 success: false,
-                message: "Blog Not Found",
+                message:
+                    "Blog Not Found",
             });
         }
 
@@ -80,31 +113,36 @@ const getBlog = async (req, res) => {
     }
 };
 
-// Update Blog
+
+// ================= UPDATE BLOG =================
+
 const updateBlog = async (req, res) => {
     try {
-
-        const blog = await Blog.findOneAndUpdate(
-            {
-                _id: req.params.id,
-                author: req.userId,
-            },
-            req.body,
-            {
-                new: true,
-            }
-        );
+        const blog =
+            await Blog.findOneAndUpdate(
+                {
+                    _id: req.params.id,
+                    author: req.userId,
+                },
+                req.body,
+                {
+                    new: true,
+                    runValidators: true,
+                }
+            );
 
         if (!blog) {
             return res.status(404).json({
                 success: false,
-                message: "Blog Not Found",
+                message:
+                    "Blog Not Found",
             });
         }
 
         res.status(200).json({
             success: true,
-            message: "Blog Updated Successfully",
+            message:
+                "Blog Updated Successfully",
             blog,
         });
 
@@ -116,25 +154,29 @@ const updateBlog = async (req, res) => {
     }
 };
 
-// Delete Blog
+
+// ================= DELETE BLOG =================
+
 const deleteBlog = async (req, res) => {
     try {
-
-        const blog = await Blog.findOneAndDelete({
-            _id: req.params.id,
-            author: req.userId,
-        });
+        const blog =
+            await Blog.findOneAndDelete({
+                _id: req.params.id,
+                author: req.userId,
+            });
 
         if (!blog) {
             return res.status(404).json({
                 success: false,
-                message: "Blog Not Found",
+                message:
+                    "Blog Not Found",
             });
         }
 
         res.status(200).json({
             success: true,
-            message: "Blog Deleted Successfully",
+            message:
+                "Blog Deleted Successfully",
         });
 
     } catch (error) {
@@ -144,39 +186,60 @@ const deleteBlog = async (req, res) => {
         });
     }
 };
+
+
+// ================= LIKE / UNLIKE BLOG =================
+
 const likeBlog = async (req, res) => {
     try {
-        const blog = await Blog.findById(req.params.id);
+        const blog =
+            await Blog.findById(
+                req.params.id
+            );
 
         if (!blog) {
             return res.status(404).json({
                 success: false,
-                message: "Blog Not Found",
+                message:
+                    "Blog Not Found",
             });
         }
 
-        const alreadyLiked = blog.likes.includes(req.userId);
+        const alreadyLiked =
+            blog.likes.some(
+                (userId) =>
+                    userId.toString() ===
+                    req.userId.toString()
+            );
 
         if (alreadyLiked) {
-            blog.likes.pull(req.userId);
+            blog.likes.pull(
+                req.userId
+            );
 
             await blog.save();
 
             return res.status(200).json({
                 success: true,
-                message: "Blog Unliked",
-                likes: blog.likes.length,
+                message:
+                    "Blog Unliked",
+                likes:
+                    blog.likes.length,
             });
         }
 
-        blog.likes.push(req.userId);
+        blog.likes.push(
+            req.userId
+        );
 
         await blog.save();
 
         res.status(200).json({
             success: true,
-            message: "Blog Liked",
-            likes: blog.likes.length,
+            message:
+                "Blog Liked",
+            likes:
+                blog.likes.length,
         });
 
     } catch (error) {
@@ -186,30 +249,58 @@ const likeBlog = async (req, res) => {
         });
     }
 };
+
+
+// ================= ADD COMMENT =================
+
 const addComment = async (req, res) => {
     try {
-        const { text } = req.body;
+        const { text } =
+            req.body;
 
-        const blog = await Blog.findById(req.params.id);
+        if (
+            !text ||
+            !text.trim()
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Comment cannot be empty",
+            });
+        }
+
+        const blog =
+            await Blog.findById(
+                req.params.id
+            );
 
         if (!blog) {
             return res.status(404).json({
                 success: false,
-                message: "Blog Not Found",
+                message:
+                    "Blog Not Found",
             });
         }
 
         blog.comments.push({
             user: req.userId,
-            text,
+            text: text.trim(),
         });
 
         await blog.save();
 
+        // Populate user details before returning comments
+        await blog.populate(
+            "comments.user",
+            "firstName lastName photoUrl"
+        );
+
         res.status(200).json({
             success: true,
-            message: "Comment Added Successfully",
-            comments: blog.comments,
+            message:
+                "Comment Added Successfully",
+            comments:
+                blog.comments,
         });
 
     } catch (error) {
@@ -219,6 +310,7 @@ const addComment = async (req, res) => {
         });
     }
 };
+
 
 module.exports = {
     createBlog,
