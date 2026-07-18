@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { getBlogsByUser } from "../../services/blogService";
 import {
     getMyProjects,
     getCollaboratingProjects,
@@ -9,22 +10,41 @@ function Dashboard() {
     const [projects, setProjects] = useState([]);
 const [collaborations, setCollaborations] = useState([]);
 const [loading, setLoading] = useState(true);
+const [blogs, setBlogs] = useState([]);
 useEffect(() => {
-    fetchDashboardData();
-}, []);
+    if (user?._id) {
+        fetchDashboardData();
+    }
+}, [user?._id]);
 
-const fetchDashboardData = async () => {
+    const fetchDashboardData = async () => {
+    if (!user?._id) return;
+
     try {
-        const [projectsRes, collaborationsRes] =
-            await Promise.all([
-                getMyProjects(),
-                getCollaboratingProjects(user._id),
-            ]);
+        setLoading(true);
 
-        setProjects(projectsRes.data.projects || []);
+        const [
+            projectsRes,
+            collaborationsRes,
+            blogsRes,
+        ] = await Promise.all([
+            getMyProjects(),
+            getCollaboratingProjects(user._id),
+            getBlogsByUser(user._id),
+        ]);
+
+        setProjects(
+            projectsRes.data.projects || []
+        );
+
         setCollaborations(
             collaborationsRes.data.projects || []
         );
+
+        setBlogs(
+            blogsRes.data.blogs || []
+        );
+
     } catch (error) {
         console.log(error);
     } finally {
@@ -46,7 +66,7 @@ const fetchDashboardData = async () => {
 
            {/* Stats */}
 
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
 
     <div className="bg-white rounded-xl shadow p-6 text-center">
         <h2 className="text-gray-500">
@@ -87,6 +107,15 @@ const fetchDashboardData = async () => {
             {collaborations.length}
         </p>
     </div>
+    <div className="bg-white rounded-xl shadow p-6 text-center">
+    <h2 className="text-gray-500">
+        My Blogs
+    </h2>
+
+    <p className="text-4xl font-bold mt-3">
+        {blogs.length}
+    </p>
+</div>
 
 </div>
 
@@ -214,7 +243,89 @@ const fetchDashboardData = async () => {
         </div>
     )}
 </div>
+    {/* Recent Blogs */}
 
+<div className="bg-white rounded-xl shadow p-6">
+
+    <h2 className="text-2xl font-semibold mb-4">
+        Recent Blogs
+    </h2>
+
+    {loading ? (
+
+        <p className="text-gray-500">
+            Loading...
+        </p>
+
+    ) : blogs.length === 0 ? (
+
+        <p className="text-gray-500">
+            No blogs published yet.
+        </p>
+
+    ) : (
+
+        <div className="space-y-4">
+
+            {blogs
+                .slice(0, 3)
+                .map((blog) => (
+
+                    <div
+                        key={blog._id}
+                        className="border rounded-xl p-4"
+                    >
+
+                        <h3 className="text-lg font-bold">
+                            {blog.title}
+                        </h3>
+
+                        <p className="text-gray-500 mt-2 line-clamp-2">
+                            {blog.content}
+                        </p>
+
+                        {blog.tags?.length > 0 && (
+
+                            <div className="flex flex-wrap gap-2 mt-3">
+
+                                {blog.tags.map(
+                                    (tag, index) => (
+
+                                        <span
+                                            key={index}
+                                            className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs"
+                                        >
+                                            #{tag}
+                                        </span>
+
+                                    )
+                                )}
+
+                            </div>
+
+                        )}
+
+                        <div className="flex gap-4 mt-3 text-sm text-gray-500">
+
+                            <span>
+                                ♥ {blog.likes?.length || 0}
+                            </span>
+
+                            <span>
+                                {blog.comments?.length || 0} Comments
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                ))}
+
+        </div>
+
+    )}
+
+</div>
         </div>
     );
 }

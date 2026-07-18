@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getDeveloperById } from "../../services/developerService";
+import { getBlogsByUser } from "../../services/blogService";
 import {
     getProjectsByUser,
     getCollaboratingProjects,
@@ -12,6 +13,7 @@ function DeveloperProfile() {
     const [developer, setDeveloper] = useState(null);
     const [projects, setProjects] = useState([]);
     const [collaboratingProjects, setCollaboratingProjects] = useState([]);
+    const [blogs, setBlogs] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -37,6 +39,12 @@ function DeveloperProfile() {
             setCollaboratingProjects(
                 collaboratingRes.data.projects || []
             );
+            // Developer ke published blogs
+const blogsRes = await getBlogsByUser(id);
+
+setBlogs(
+    blogsRes.data.blogs || []
+);
 
         } catch (err) {
             console.log(err);
@@ -442,7 +450,6 @@ function DeveloperProfile() {
 
             </div>
 
-
             {/* PROJECTS I'M COLLABORATING ON */}
 
             <div>
@@ -466,7 +473,11 @@ function DeveloperProfile() {
                             const myTeamMember =
                                 project.teamMembers?.find(
                                     (member) =>
-                                        member.user?._id === id
+                                        (
+                                            member.user?._id ||
+                                            member.user
+                                        )?.toString() ===
+                                        id?.toString()
                                 );
 
                             return (
@@ -476,84 +487,91 @@ function DeveloperProfile() {
                                     className="bg-white rounded-2xl shadow p-6"
                                 >
 
+                                    {/* PROJECT TITLE */}
+
                                     <h3 className="text-2xl font-bold">
                                         {project.title}
                                     </h3>
+
+
+                                    {/* PROJECT DESCRIPTION */}
 
                                     <p className="text-gray-600 mt-3">
                                         {project.description}
                                     </p>
 
 
-                                    {/* ROLE */}
-{/* ROLE + CONTRIBUTION */}
+                                    {/* ROLE + CONTRIBUTION */}
 
-{myTeamMember && (
+                                    {myTeamMember && (
 
-    <div className="mt-5 space-y-4">
-
-        {/* ROLE */}
-
-        <div>
-            <span className="text-sm text-gray-500">
-                Collaborating as:
-            </span>
-
-            <span className="ml-2 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
-                {myTeamMember.role}
-            </span>
-        </div>
+                                        <div className="mt-5 space-y-4">
 
 
-        {/* CONTRIBUTION */}
+                                            {/* ROLE */}
 
-        <div className="bg-gray-50 rounded-xl p-4">
+                                            <div>
 
-            <p className="text-sm font-semibold text-gray-700">
-                Contribution
-            </p>
+                                                <span className="text-sm text-gray-500">
+                                                    Collaborating as:
+                                                </span>
 
-            <p className="text-gray-600 mt-2">
-                {myTeamMember.contribution ||
-                    "No contribution details added yet."}
-            </p>
+                                                <span className="ml-2 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-semibold">
+                                                    {myTeamMember.role}
+                                                </span>
 
-        </div>
+                                            </div>
 
 
-        {/* CONTRIBUTION STATUS */}
+                                            {/* CONTRIBUTION */}
 
-        <div>
+                                            <div className="bg-gray-50 rounded-xl p-4">
 
-            <span className="text-sm text-gray-500 mr-2">
-                Status:
-            </span>
+                                                <p className="text-sm font-semibold text-gray-700">
+                                                    Contribution
+                                                </p>
 
-            <span
-                className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                    myTeamMember.contributionStatus ===
-                    "completed"
-                        ? "bg-green-100 text-green-700"
-                        : myTeamMember.contributionStatus ===
-                          "in-progress"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-gray-200 text-gray-700"
-                }`}
-            >
-                {myTeamMember.contributionStatus ===
-                "completed"
-                    ? "Completed"
-                    : myTeamMember.contributionStatus ===
-                      "in-progress"
-                    ? "In Progress"
-                    : "Not Started"}
-            </span>
+                                                <p className="text-gray-600 mt-2">
+                                                    {myTeamMember.contribution ||
+                                                        "No contribution details added yet."}
+                                                </p>
 
-        </div>
+                                            </div>
 
-    </div>
 
-)}
+                                            {/* CONTRIBUTION STATUS */}
+
+                                            <div>
+
+                                                <span className="text-sm text-gray-500 mr-2">
+                                                    Status:
+                                                </span>
+
+                                                <span
+                                                    className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                                                        myTeamMember.contributionStatus ===
+                                                        "completed"
+                                                            ? "bg-green-100 text-green-700"
+                                                            : myTeamMember.contributionStatus ===
+                                                              "in-progress"
+                                                            ? "bg-blue-100 text-blue-700"
+                                                            : "bg-gray-200 text-gray-700"
+                                                    }`}
+                                                >
+                                                    {myTeamMember.contributionStatus ===
+                                                    "completed"
+                                                        ? "Completed"
+                                                        : myTeamMember.contributionStatus ===
+                                                          "in-progress"
+                                                        ? "In Progress"
+                                                        : "Not Started"}
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+                                    )}
 
 
                                     {/* PROJECT OWNER */}
@@ -613,7 +631,7 @@ function DeveloperProfile() {
                                     )}
 
 
-                                    {/* LINKS */}
+                                    {/* PROJECT LINKS */}
 
                                     <div className="flex gap-4 mt-5">
 
@@ -649,6 +667,124 @@ function DeveloperProfile() {
 
                             );
                         })}
+
+                    </div>
+
+                )}
+
+            </div>
+
+
+            {/* PUBLISHED BLOGS */}
+
+            <div>
+
+                <h2 className="text-3xl font-bold mb-5">
+                    Published Blogs
+                </h2>
+
+                {blogs.length === 0 ? (
+
+                    <div className="bg-white rounded-xl shadow p-8 text-center text-gray-500">
+                        No blogs published yet.
+                    </div>
+
+                ) : (
+
+                    <div className="grid md:grid-cols-2 gap-6">
+
+                        {blogs.map((blog) => (
+
+                            <div
+                                key={blog._id}
+                                className="bg-white rounded-2xl shadow overflow-hidden"
+                            >
+
+                                {/* BLOG COVER IMAGE */}
+
+                                {blog.coverImage && (
+
+                                    <img
+                                        src={blog.coverImage}
+                                        alt={blog.title}
+                                        className="w-full h-48 object-cover"
+                                    />
+
+                                )}
+
+
+                                <div className="p-6">
+
+                                    {/* BLOG TITLE */}
+
+                                    <h3 className="text-2xl font-bold">
+                                        {blog.title}
+                                    </h3>
+
+
+                                    {/* BLOG DATE */}
+
+                                    {blog.createdAt && (
+
+                                        <p className="text-xs text-gray-400 mt-2">
+                                            {new Date(
+                                                blog.createdAt
+                                            ).toLocaleDateString()}
+                                        </p>
+
+                                    )}
+
+
+                                    {/* BLOG CONTENT */}
+
+                                    <p className="text-gray-600 mt-4 line-clamp-4 whitespace-pre-line">
+                                        {blog.content}
+                                    </p>
+
+
+                                    {/* BLOG TAGS */}
+
+                                    {blog.tags?.length > 0 && (
+
+                                        <div className="flex flex-wrap gap-2 mt-5">
+
+                                            {blog.tags.map(
+                                                (tag, index) => (
+
+                                                    <span
+                                                        key={index}
+                                                        className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm"
+                                                    >
+                                                        #{tag}
+                                                    </span>
+
+                                                )
+                                            )}
+
+                                        </div>
+
+                                    )}
+
+
+                                    {/* BLOG STATS */}
+
+                                    <div className="flex gap-5 mt-5 pt-4 border-t text-sm text-gray-500">
+
+                                        <span>
+                                            ♥ {blog.likes?.length || 0} Likes
+                                        </span>
+
+                                        <span>
+                                            {blog.comments?.length || 0} Comments
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        ))}
 
                     </div>
 

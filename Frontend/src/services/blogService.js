@@ -39,3 +39,7 @@ export const addComment = (id, data) => {
         data
     );
 };
+// Get blogs by user
+export const getBlogsByUser = (userId) => {
+    return api.get(`/blogs/user/${userId}`);
+};

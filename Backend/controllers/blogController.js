@@ -73,7 +73,34 @@ const getBlogs = async (req, res) => {
         });
     }
 };
+// ================= GET BLOGS BY USER ID =================
 
+const getBlogsByUser = async (req, res) => {
+    try {
+        const blogs = await Blog.find({
+            author: req.params.userId,
+        })
+            .populate(
+                "author",
+                "firstName lastName photoUrl"
+            )
+            .sort({
+                createdAt: -1,
+            });
+
+        res.status(200).json({
+            success: true,
+            count: blogs.length,
+            blogs,
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
 
 // ================= GET SINGLE BLOG =================
 
@@ -320,4 +347,5 @@ module.exports = {
     deleteBlog,
     likeBlog,
     addComment,
+    getBlogsByUser,
 };

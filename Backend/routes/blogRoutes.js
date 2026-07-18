@@ -7,16 +7,19 @@ const authMiddleware = require("../middleware/authMiddleware");
 const {
     createBlog,
     getBlogs,
+    getBlogsByUser,
     getBlog,
     updateBlog,
     deleteBlog,
     likeBlog,
+
     addComment,
 } = require("../controllers/blogController");
 
 router.post("/", authMiddleware, createBlog);
 
 router.get("/", getBlogs);
+router.get("/user/:userId", getBlogsByUser);
 
 router.get("/:id", getBlog);
 
