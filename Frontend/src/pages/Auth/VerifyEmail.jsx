@@ -22,26 +22,36 @@ function VerifyEmail() {
             return;
         }
 
+        if (otp.length !== 6) {
+            setError(
+                "Please enter a valid 6-digit OTP."
+            );
+            return;
+        }
+
         try {
             setLoading(true);
             setError("");
 
-            await verifyEmailOTP({
+            const res = await verifyEmailOTP({
                 email,
                 otp,
             });
 
             alert(
+                res.data.message ||
                 "Email verified successfully! Please login."
             );
 
-            navigate("/login");
+            // Login page ka route "/"
+            navigate("/");
 
         } catch (error) {
             setError(
                 error.response?.data?.message ||
-                "Unable to verify email"
+                "Unable to verify email. Please try again."
             );
+
         } finally {
             setLoading(false);
         }
@@ -64,13 +74,11 @@ function VerifyEmail() {
                     {email || "your email"}
                 </p>
 
-
                 {error && (
                     <div className="bg-red-50 text-red-600 p-3 rounded-lg mt-5 text-sm">
                         {error}
                     </div>
                 )}
-
 
                 <form
                     onSubmit={handleVerify}
@@ -93,7 +101,6 @@ function VerifyEmail() {
                         className="w-full border rounded-lg px-4 py-3 text-center text-2xl tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
 
-
                     <button
                         type="submit"
                         disabled={
@@ -108,6 +115,17 @@ function VerifyEmail() {
                     </button>
 
                 </form>
+
+                {!email && (
+                    <button
+                        onClick={() =>
+                            navigate("/register")
+                        }
+                        className="w-full mt-4 text-blue-600 font-semibold hover:underline"
+                    >
+                        Go back to Register
+                    </button>
+                )}
 
             </div>
 

@@ -6,58 +6,95 @@ const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 const fs = require("fs");
 // ================= REGISTER =================
-// ================= REGISTER =================
 const registerUser = async (req, res) => {
     try {
         const { email, password } = req.body;
+        const normalizedEmail = email.toLowerCase();
 
-        const existingUser = await User.findOne({ email });
+        let existingUser = await User.findOne({
+            email: normalizedEmail
+        });
 
-        if (existingUser) {
+        // If user already exists and is verified
+        if (existingUser && existingUser.isEmailVerified) {
             return res.status(400).json({
                 success: false,
                 message: "User already exists",
             });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Generate 6 digit OTP
+        // Generate OTP
         const otp = Math.floor(
             100000 + Math.random() * 900000
         ).toString();
 
-        // OTP valid for 10 minutes
         const otpExpires = new Date(
             Date.now() + 10 * 60 * 1000
         );
 
+        // If user exists but email is NOT verified
+        if (existingUser) {
+
+            existingUser.emailVerificationOTP = otp;
+            existingUser.emailVerificationOTPExpires = otpExpires;
+
+            await existingUser.save();
+
+            await transporter.sendMail({
+                from: `"DevConnect" <${process.env.EMAIL_USER}>`,
+                to: existingUser.email,
+                subject: "Verify your DevConnect email",
+                text: `Your DevConnect verification OTP is ${otp}. This OTP is valid for 10 minutes.`,
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: "New OTP sent to your email.",
+                email: existingUser.email,
+            });
+        }
+
+        // New user
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const user = await User.create({
             ...req.body,
-            email: email.toLowerCase(),
+            email: normalizedEmail,
             password: hashedPassword,
             isEmailVerified: false,
             emailVerificationOTP: otp,
             emailVerificationOTPExpires: otpExpires,
         });
 
-        // Send OTP to user's email
-        await transporter.sendMail({
-            from: `"DevConnect" <${process.env.EMAIL_USER}>`,
-            to: user.email,
-            subject: "Verify your DevConnect email",
-            text: `Your DevConnect verification OTP is ${otp}. This OTP is valid for 10 minutes.`,
-        });
+        try {
+
+            await transporter.sendMail({
+                from: `"DevConnect" <${process.env.EMAIL_USER}>`,
+                to: user.email,
+                subject: "Verify your DevConnect email",
+                text: `Your DevConnect verification OTP is ${otp}. This OTP is valid for 10 minutes.`,
+            });
+
+        } catch (emailError) {
+
+            // Email failed → remove incomplete account
+            await User.findByIdAndDelete(user._id);
+
+            return res.status(500).json({
+                success: false,
+                message: "Unable to send verification email. Please register again.",
+            });
+        }
 
         res.status(201).json({
             success: true,
-            message:
-                "Registration successful. Please verify your email using the OTP sent to you.",
+            message: "Registration successful. Please verify your email.",
             email: user.email,
         });
 
     } catch (error) {
-        console.log(error);
+
+        console.log("Register Error:", error);
 
         res.status(500).json({
             success: false,
@@ -65,7 +102,7 @@ const registerUser = async (req, res) => {
         });
     }
 };
-// ================= VERIFY EMAIL OTP =================
+//======= VERIFY EMAIL OTP =================
 const verifyEmailOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
