@@ -238,7 +238,9 @@ const updateProfile = async (req, res) => {
         if (firstName !== undefined) user.firstName = firstName;
         if (lastName !== undefined) user.lastName = lastName;
         if (age !== undefined) user.age = age;
-        if (gender !== undefined) user.gender = gender;
+        if (gender !== undefined && gender !== "") {
+    user.gender = gender;
+}
         if (about !== undefined) user.about = about;
         if (skills !== undefined) user.skills = skills;
         if (linkedin !== undefined) user.linkedin = linkedin;
