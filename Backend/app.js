@@ -13,13 +13,15 @@ const blogRoutes = require("./routes/blogRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const followRoutes = require("./routes/followRoutes");
 // Middlewares
-cors({
-  origin: [
-    "http://localhost:5173",
-    "https://dev-connect-olive-seven.vercel.app"
-  ],
-  credentials: true,
-})
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://dev-connect-olive-seven.vercel.app",
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use("/api/projects", projectRoutes);
