@@ -47,6 +47,14 @@ function Navbar() {
                    <NavLink to="/collaboration" className={linkClass}>
     Collaborate
 </NavLink>
+{user?.role === "admin" && (
+    <NavLink
+        to="/admin"
+        className={linkClass}
+    >
+        Admin
+    </NavLink>
+)}
                 </div>
 
                 <div className="flex items-center gap-5">

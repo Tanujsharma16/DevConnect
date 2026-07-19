@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import AdminRoute from "./routes/AdminRoute";
 import DeveloperProfile from "./pages/Developers/DeveloperProfile";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
@@ -83,7 +84,14 @@ function App() {
                         path="/collaboration"
                         element={<Collaboration />}
                     />
-
+                    <Route
+    path="/admin"
+    element={
+        <AdminRoute>
+            <AdminDashboard />
+        </AdminRoute>
+    }
+/>
                 </Route>
 
             </Routes>

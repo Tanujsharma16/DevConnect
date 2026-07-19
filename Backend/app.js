@@ -1,6 +1,7 @@
 const express = require("express");
 const githubRoutes = require("./routes/githubRoutes");
 const cors = require("cors");
+const adminRoutes = require("./routes/adminRoutes");
 const requestRoutes = require("./routes/requestRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const fileUpload = require("express-fileupload");
@@ -35,7 +36,7 @@ app.use("/api/blogs", blogRoutes);
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/request", requestRoutes);
-
+app.use("/api/admin", adminRoutes);
 // Test Route
 app.get("/", (req, res) => {
     res.send("🚀 DevConnect Backend is Running");
