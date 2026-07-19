@@ -292,13 +292,14 @@ const updateProfile = async (req, res) => {
             user: updatedUser,
         });
 
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
-    }
-};
+} catch (error) {
+    console.error("Update Profile Error:", error);
+
+    res.status(500).json({
+        success: false,
+        message: error.message,
+    });
+}
 // ================= CHANGE PASSWORD =================
 const changePassword = async (req, res) => {
     try {
