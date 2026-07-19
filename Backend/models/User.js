@@ -84,6 +84,20 @@ following: [
         ref: "User",
     },
 ],
+isEmailVerified: {
+    type: Boolean,
+    default: false,
+},
+
+emailVerificationOTP: {
+    type: String,
+    default: null,
+},
+
+emailVerificationOTPExpires: {
+    type: Date,
+    default: null,
+},
 });
 
 

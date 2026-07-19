@@ -1,9 +1,11 @@
 const axios = require("axios");
+const transporter = require("../config/email");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 const fs = require("fs");
+// ================= REGISTER =================
 // ================= REGISTER =================
 const registerUser = async (req, res) => {
     try {
@@ -20,18 +22,100 @@ const registerUser = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Generate 6 digit OTP
+        const otp = Math.floor(
+            100000 + Math.random() * 900000
+        ).toString();
+
+        // OTP valid for 10 minutes
+        const otpExpires = new Date(
+            Date.now() + 10 * 60 * 1000
+        );
+
         const user = await User.create({
             ...req.body,
+            email: email.toLowerCase(),
             password: hashedPassword,
+            isEmailVerified: false,
+            emailVerificationOTP: otp,
+            emailVerificationOTPExpires: otpExpires,
         });
 
-        const userResponse = user.toObject();
-        delete userResponse.password;
+        // Send OTP to user's email
+        await transporter.sendMail({
+            from: `"DevConnect" <${process.env.EMAIL_USER}>`,
+            to: user.email,
+            subject: "Verify your DevConnect email",
+            text: `Your DevConnect verification OTP is ${otp}. This OTP is valid for 10 minutes.`,
+        });
 
         res.status(201).json({
             success: true,
-            message: "User Registered Successfully",
-            user: userResponse,
+            message:
+                "Registration successful. Please verify your email using the OTP sent to you.",
+            email: user.email,
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+// ================= VERIFY EMAIL OTP =================
+const verifyEmailOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        const user = await User.findOne({
+            email: email.toLowerCase(),
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        if (user.isEmailVerified) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is already verified",
+            });
+        }
+
+        if (
+            user.emailVerificationOTP !== otp
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid OTP",
+            });
+        }
+
+        if (
+            !user.emailVerificationOTPExpires ||
+            user.emailVerificationOTPExpires < new Date()
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "OTP has expired",
+            });
+        }
+
+        user.isEmailVerified = true;
+        user.emailVerificationOTP = null;
+        user.emailVerificationOTPExpires = null;
+
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Email verified successfully",
         });
 
     } catch (error) {
@@ -41,7 +125,6 @@ const registerUser = async (req, res) => {
         });
     }
 };
-
 // ================= LOGIN =================
 const loginUser = async (req, res) => {
     try {
@@ -55,7 +138,12 @@ const loginUser = async (req, res) => {
                 message: "Invalid Email or Password",
             });
         }
-
+        if (!user.isEmailVerified) {
+    return res.status(403).json({
+        success: false,
+        message: "Please verify your email before logging in",
+    });
+}
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
@@ -312,6 +400,7 @@ const logoutUser = (req, res) => {
 
 module.exports = {
     registerUser,
+    verifyEmailOTP,
     loginUser,
     getProfile,
     updateProfile,

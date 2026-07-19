@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 
 import AuthLayout from "../../layouts/AuthLayout";
 import InputField from "../../components/ui/InputField";
 import Button from "../../components/ui/Button";
-import { useNavigate } from "react-router-dom";
 import { registerUser } from "../../services/authService";
+
 function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
@@ -20,24 +22,34 @@ function Register() {
   } = useForm();
 
   const password = watch("password");
-const onSubmit = async (data) => {
-  try {
-    setLoading(true);
 
-    const { confirmPassword, ...userData } = data;
+  const onSubmit = async (data) => {
+    try {
+      setLoading(true);
 
-    const res = await registerUser(userData);
+      const { confirmPassword, ...userData } = data;
 
-    alert(res.data.message);
+      const res = await registerUser(userData);
 
-    navigate("/");
+      alert(res.data.message);
 
-  } catch (error) {
-    alert(error.response?.data?.message || "Registration Failed");
-  } finally {
-    setLoading(false);
-  }
-};
+      // Registration ke baad OTP verification page par bhejega
+      navigate("/verify-email", {
+        state: {
+          email: userData.email,
+        },
+      });
+
+    } catch (error) {
+      alert(
+        error.response?.data?.message ||
+        "Registration Failed"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AuthLayout
       title="Create Account"
@@ -100,7 +112,8 @@ const onSubmit = async (data) => {
           register={register("confirmPassword", {
             required: "Confirm password is required",
             validate: (value) =>
-              value === password || "Passwords do not match",
+              value === password ||
+              "Passwords do not match",
           })}
           error={errors.confirmPassword}
           showPassword={showConfirmPassword}
