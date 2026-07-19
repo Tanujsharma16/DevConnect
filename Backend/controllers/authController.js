@@ -300,6 +300,7 @@ const updateProfile = async (req, res) => {
         message: error.message,
     });
 }
+}
 // ================= CHANGE PASSWORD =================
 const changePassword = async (req, res) => {
     try {
