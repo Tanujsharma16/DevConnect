@@ -8,14 +8,19 @@ const fs = require("fs");
 // ================= REGISTER =================
 const registerUser = async (req, res) => {
     try {
+        console.log("1. Register API Hit");
+
         const { email, password } = req.body;
         const normalizedEmail = email.toLowerCase();
 
+        console.log("2. Email:", normalizedEmail);
+
         let existingUser = await User.findOne({
-            email: normalizedEmail
+            email: normalizedEmail,
         });
 
-        // If user already exists and is verified
+        console.log("3. Existing User:", existingUser ? "YES" : "NO");
+
         if (existingUser && existingUser.isEmailVerified) {
             return res.status(400).json({
                 success: false,
@@ -23,38 +28,41 @@ const registerUser = async (req, res) => {
             });
         }
 
-        // Generate OTP
-        const otp = Math.floor(
-            100000 + Math.random() * 900000
-        ).toString();
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        const otpExpires = new Date(
-            Date.now() + 10 * 60 * 1000
-        );
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-        // If user exists but email is NOT verified
         if (existingUser) {
+
+            console.log("4. Unverified user found");
 
             existingUser.emailVerificationOTP = otp;
             existingUser.emailVerificationOTPExpires = otpExpires;
 
             await existingUser.save();
 
+            console.log("5. User saved");
+
+            console.log("6. Sending Mail...");
+
             await transporter.sendMail({
                 from: `"DevConnect" <${process.env.EMAIL_USER}>`,
                 to: existingUser.email,
                 subject: "Verify your DevConnect email",
-                text: `Your DevConnect verification OTP is ${otp}. This OTP is valid for 10 minutes.`,
+                text: `Your DevConnect verification OTP is ${otp}.`,
             });
+
+            console.log("7. Mail Sent");
 
             return res.status(200).json({
                 success: true,
-                message: "New OTP sent to your email.",
+                message: "New OTP sent",
                 email: existingUser.email,
             });
         }
 
-        // New user
+        console.log("4. Creating New User");
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await User.create({
@@ -66,37 +74,32 @@ const registerUser = async (req, res) => {
             emailVerificationOTPExpires: otpExpires,
         });
 
-        try {
+        console.log("5. User Created:", user._id);
 
-            await transporter.sendMail({
-                from: `"DevConnect" <${process.env.EMAIL_USER}>`,
-                to: user.email,
-                subject: "Verify your DevConnect email",
-                text: `Your DevConnect verification OTP is ${otp}. This OTP is valid for 10 minutes.`,
-            });
+        console.log("6. Sending Mail...");
 
-        } catch (emailError) {
+        await transporter.sendMail({
+            from: `"DevConnect" <${process.env.EMAIL_USER}>`,
+            to: user.email,
+            subject: "Verify your DevConnect email",
+            text: `Your DevConnect verification OTP is ${otp}.`,
+        });
 
-            // Email failed → remove incomplete account
-            await User.findByIdAndDelete(user._id);
+        console.log("7. Mail Sent");
 
-            return res.status(500).json({
-                success: false,
-                message: "Unable to send verification email. Please register again.",
-            });
-        }
-
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
-            message: "Registration successful. Please verify your email.",
+            message: "Registration successful",
             email: user.email,
         });
 
     } catch (error) {
 
-        console.log("Register Error:", error);
+        console.log("REGISTER ERROR =======================");
+        console.log(error);
+        console.log("=====================================");
 
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: error.message,
         });
