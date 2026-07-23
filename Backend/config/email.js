@@ -1,23 +1,19 @@
-const { Resend } = require("resend");
+const sgMail = require("@sendgrid/mail");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const transporter = {
     sendMail: async ({ to, subject, text, html }) => {
 
-        const { data, error } = await resend.emails.send({
-            from: "DevConnect <onboarding@resend.dev>",
+        const msg = {
             to,
+            from: "your_verified_email@gmail.com",
             subject,
             text,
             html,
-        });
+        };
 
-        if (error) {
-            throw new Error(error.message);
-        }
-
-        return data;
+        await sgMail.send(msg);
     },
 };
 
