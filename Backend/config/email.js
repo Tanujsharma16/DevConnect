@@ -5,20 +5,23 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const transporter = {
     sendMail: async ({to, subject, text, html}) => {
         try {
-            await sgMail.send({
-                to,
-                from: "tanujpandit16q@gmail.com",
-                subject,
-                text,
-                html
-            });
-        } catch(err) {
-            console.log(
-              "SENDGRID ERROR:",
-              err.response.body.errors
-            );
-            throw err;
-        }
+    await sgMail.send({
+        to,
+        from: "your_verified_email@gmail.com",
+        subject,
+        text,
+        html
+    });
+
+} catch (err) {
+
+    console.log(
+        "SENDGRID ERROR:",
+        JSON.stringify(err.response.body.errors, null, 2)
+    );
+
+    throw err;
+}
     }
 };
 
