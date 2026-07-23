@@ -7,7 +7,7 @@ const transporter = {
 
         const msg = {
             to,
-            from: "your_verified_email@gmail.com",
+            from: "tanujpandit16q@gmail.com",
             subject,
             text,
             html,
