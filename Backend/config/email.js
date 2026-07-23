@@ -7,7 +7,7 @@ const transporter = {
         try {
     await sgMail.send({
         to,
-        from: "tumhari_verified_email@gmail.com",
+        from: "tanujpandit16q@gmail.com",
         subject,
         text,
         html
