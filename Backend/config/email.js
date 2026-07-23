@@ -16,7 +16,7 @@ const transporter = {
 } catch (err) {
     console.log(
         "SENDGRID ERROR DETAIL:",
-        JSON.stringify(err.response.body.errors, null, 2)
+        JSON.stringify(err.response?.body, null, 2)
     );
 
     throw err;
