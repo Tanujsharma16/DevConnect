@@ -7,16 +7,15 @@ const transporter = {
         try {
     await sgMail.send({
         to,
-        from: "your_verified_email@gmail.com",
+        from: "tumhari_verified_email@gmail.com",
         subject,
         text,
         html
     });
 
 } catch (err) {
-
     console.log(
-        "SENDGRID ERROR:",
+        "SENDGRID ERROR DETAIL:",
         JSON.stringify(err.response.body.errors, null, 2)
     );
 
